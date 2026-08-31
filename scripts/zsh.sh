@@ -40,6 +40,13 @@ if [ "$ACTION" = "--remove" ]; then
     fi
 
     warn "Ambiente de terminal e shell removido com sucesso!"
+    echo -e "\n============================================================"
+    echo -e "\033[1;31m⚠️ ATENÇÃO: SESSÃO FANTASMA DO ZSH\033[0m"
+    echo -e "Como o Zsh e o Starship foram apagados enquanto você os usava,"
+    echo -e "erros como 'no such file or directory' podem aparecer agora."
+    echo -e "\nPara recarregar o terminal no Bash limpo, digite o comando:"
+    echo -e "\n👉  \033[1;32mexec bash\033[0m"
+    echo -e "============================================================\n"
     exit 0
 fi
 

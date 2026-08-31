@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+exec < /dev/tty
+
 BASE_URL="https://pdrops.net"
 
 # 1. Menu de Seleção de Modo (Instalar / Remover)

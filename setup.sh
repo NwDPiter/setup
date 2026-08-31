@@ -10,7 +10,7 @@ echo -e "\n\033[1;36m=== pdrops.net Workstation Setup & Management ===\033[0m\n"
 
 PS3_MODE=$'\n\033[1;33mEscolha a ação desejada (1-3): \033[0m'
 mode_options=(
-    "Instalar Componentes"
+    "Instalar Componentes (Apenas user atual)"
     "Remover / Desinstalar Componentes"
     "Sair"
 )
@@ -44,7 +44,7 @@ profile_options=(
     "Combos Customizados (Sub-menu)"
     "Perfil Completo (Terminal + CLI + Docker + K8s)"
     "Apenas Terminal & Shell (Zsh, Starship, Dotfiles)"
-    "Apenas Utilitários CLI (FZF, Zoxide, Bat, Ripgrep, Nvim)"
+    "Apenas Utilitários CLI (FZF, Zoxide, Bat, Ripgrep, Nvim, Byobu, Mise)"
     "Apenas Stack Containers (Docker, Compose, Lazydocker, Incus)"
     "Apenas Stack Kubernetes (kubectl, Helm, K9s, jq, yq)"
     "Sair"

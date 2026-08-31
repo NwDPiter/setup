@@ -57,7 +57,7 @@ alias an='ansible'
 
 # --- Exports ---
 export LANG='en_US.UTF-8'
-export FZF_DEFAULT_OPTS="--preview 'bat --style=numbers --color=always --line-range :500 {}'"
+export FZF_DEFAULT_OPTS="--preview 'batcat --style=numbers --color=always --line-range :500 {}'"
 
 # --- Key Bindings ---
 # Navigate words with Ctrl + Arrow Keys
@@ -71,6 +71,7 @@ command -v zoxide &> /dev/null && eval "$(zoxide init zsh)"
 
 # --- Shell Prompt Initialization ---
 eval "$(starship init zsh)"
+eval "$(zoxide init zsh)"
 
 # --- Script  ---
 # FZF

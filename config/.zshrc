@@ -71,7 +71,6 @@ command -v zoxide &> /dev/null && eval "$(zoxide init zsh)"
 
 # --- Shell Prompt Initialization ---
 eval "$(starship init zsh)"
-eval "$(zoxide init zsh)"
 
 # --- Script  ---
 # FZF

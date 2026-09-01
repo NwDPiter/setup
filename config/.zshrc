@@ -45,10 +45,16 @@ alias ld='lazydocker'
 # --- Aliases: Incus ---
 alias in='incus'
 alias inn='in network'
-alias ins='in storage'
+alias ins='in stop'
 alias inl='in list'
 alias ine='in exec'
 alias inrm='in remove'
+
+# --- Aliases: Mise ---
+alias m='mise'
+alias ml='mise list'
+alias mu='mise use'
+alias mr='mise remove'
 
 # --- Aliases: System Management ---
 alias spu='sudo apt update'

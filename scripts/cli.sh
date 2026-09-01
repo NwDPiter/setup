@@ -46,7 +46,7 @@ if ! command -v mise &> /dev/null; then
 fi
 
 sudo apt update
-sudo apt install -y batcat bat neovim byobu
+sudo apt install -y bat neovim byobu
 mise use fzf@latest zoxide@latest ripgrep@latest
 
 # Corrige o nome do executável do bat no Debian/Ubuntu/Pop!_OS

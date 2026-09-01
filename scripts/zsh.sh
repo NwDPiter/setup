@@ -45,7 +45,7 @@ if [ "$ACTION" = "--remove" ]; then
     echo -e "Como o Zsh e o Starship foram apagados enquanto você os usava,"
     echo -e "erros como 'no such file or directory' podem aparecer agora."
     echo -e "\nPara recarregar o terminal no Bash limpo, digite o comando:"
-    echo -e "\n👉  \033[1;32mexec bash\033[0m"
+    echo -e "\n👉  \033[1;32mexec bash | Ctrl + d\033[0m"
     echo -e "============================================================\n"
     exit 0
 fi

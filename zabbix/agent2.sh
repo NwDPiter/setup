@@ -163,32 +163,39 @@ main() {
             ;;
     esac
     
-    # Executar a ação escolhida
-    case "$action" in
-        1)  # Instalar
-            case "$OS" in
-                ubuntu)
-                    install_ubuntu
-                    ;;
-                debian)
-                    install_debian
-                    ;;
-            esac
-            ;;
-        2)  # Remover
-            case "$OS" in
-                ubuntu)
-                    remove_ubuntu
-                    ;;
-                debian)
-                    remove_debian
-                    ;;
-            esac
-            ;;
-        3)  # Verificar status
+    while true; do
+        choose_action
+        action=$?
+
+        # Executar a ação escolhida
+        case "$action" in
+            1)  # Instalar
+                case "$OS" in
+                    ubuntu)
+                        install_ubuntu
+                        ;;
+                    debian)
+                        install_debian
+                        ;;
+                esac
+                ;;
+            2)  # Remover
+                case "$OS" in
+                    ubuntu)
+                        remove_ubuntu
+                        ;;
+                    debian)
+                        remove_debian
+                        ;;
+                esac
+                ;;
+            3)  # Verificar status
                 check_status
                 ;;
-    esac
+        esac
+
+        read -r -p "Pressione Enter para voltar ao menu..." < /dev/tty
+    done
 }
 
 # Executar

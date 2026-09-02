@@ -83,7 +83,7 @@ validate_wol() {
     echo "$interfaces" | nl
     
     echo ""
-    read -p "Selecione o número da interface a configurar: " interface_choice
+    read -p "Selecione o número da interface a configurar: " interface_choice < /dev/tty
     
     INTERFACE=$(echo "$interfaces" | sed -n "${interface_choice}p")
     

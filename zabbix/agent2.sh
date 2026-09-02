@@ -27,23 +27,29 @@ check_root() {
 install_ubuntu() {
     echo "Instalando Zabbix Agent2 em Ubuntu $OS_VERSION..."
     
-    wget https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu24.04_all.deb
-    dpkg -i zabbix-release_latest_7.0+ubuntu24.04_all.deb
-    apt update
-    
-    apt install -y zabbix-agent2
-    apt install -y zabbix-agent2-plugin-mongodb zabbix-agent2-plugin-mssql zabbix-agent2-plugin-postgresql
-    
-    systemctl restart zabbix-agent2
-    systemctl enable zabbix-agent2
-    
-    echo "Zabbix Agent2 instalado com sucesso em Ubuntu"
+    if [ ! command -v wget &> /dev/null]; then
+        apt update && apt install -y wget
+    fi
+        wget https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu24.04_all.deb
+        dpkg -i zabbix-release_latest_7.0+ubuntu24.04_all.deb
+        apt update
+
+        apt install -y zabbix-agent2
+        apt install -y zabbix-agent2-plugin-mongodb zabbix-agent2-plugin-mssql zabbix-agent2-plugin-postgresql
+
+        systemctl restart zabbix-agent2
+        systemctl enable zabbix-agent2
+
+        echo "Zabbix Agent2 instalado com sucesso em Ubuntu"
 }
 
 # Instalar Zabbix Agent2 em Debian
 install_debian() {
     echo "Instalando Zabbix Agent2 em Debian $OS_VERSION..."
     
+    if [ ! command -v wget &> /dev/null ]; then
+        apt update && apt install -y wget
+    fi
     wget https://repo.zabbix.com/zabbix/7.0/debian/pool/main/z/zabbix-release/zabbix-release_latest_7.0+debian13_all.deb
     dpkg -i zabbix-release_latest_7.0+debian13_all.deb
     apt update
@@ -99,7 +105,7 @@ choose_action() {
     echo "========================================"
     echo "OBS: Este script suporta apenas Ubuntu(24.04) e Debian(13)"
     echo ""
-    read -p "Escolha uma opção (0-2): " choice
+    read -p "Escolha uma opção (0-2): " choice < /dev/tty
     
     case "$choice" in
         1)
@@ -114,6 +120,7 @@ choose_action() {
             ;;
         *)
             echo "Opção inválida!"
+            sleep 1
             choose_action
             ;;
     esac

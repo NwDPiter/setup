@@ -23,6 +23,18 @@ check_root() {
     fi
 }
 
+# Função para verificar os sttus do agente
+check_status() {
+    if systemctl is-active --quiet zabbix-agent2; then
+        echo "Zabbix Agent2 está ativo e em execução"
+    else
+        echo "Zabbix Agent2 não está em execução"
+        echo "Use: systemctl status zabbix-agent2"
+    fi
+
+}
+
+
 # Instalar Zabbix Agent2 em Ubuntu
 install_ubuntu() {
     echo "Instalando Zabbix Agent2 em Ubuntu $OS_VERSION..."
@@ -101,11 +113,12 @@ choose_action() {
     echo "========================================"
     echo "1) Instalar Zabbix Agent2"
     echo "2) Remover Zabbix Agent2"
+    echo "3) Verificar status do Zabbix Agent2"
     echo "0) Sair"
     echo "========================================"
     echo "OBS: Este script suporta apenas Ubuntu(24.04) e Debian(13)"
     echo ""
-    read -p "Escolha uma opção (0-2): " choice < /dev/tty
+    read -p "Escolha uma opção (0-3): " choice < /dev/tty
     
     case "$choice" in
         1)
@@ -113,6 +126,9 @@ choose_action() {
             ;;
         2)
             return 2  # Remover
+            ;;
+        3)
+            return 3  # Verificar status
             ;;
         0)
             echo "Saindo..."
@@ -169,6 +185,9 @@ main() {
                     ;;
             esac
             ;;
+        3)  # Verificar status
+                check_status
+                ;;
     esac
 }
 

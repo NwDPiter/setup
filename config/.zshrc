@@ -30,6 +30,7 @@ alias l='ls -CF'
 alias cat='batcat'
 alias v='nvim'
 alias vf='nvim $(fzf)'
+alias by='byobu'
 
 # --- Aliases: Kubernetes ---
 alias k='kubectl'

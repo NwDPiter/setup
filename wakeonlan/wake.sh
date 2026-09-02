@@ -45,7 +45,7 @@ check_root() {
 
 # Detectar interfaces de rede Ethernet
 detect_interfaces() {
-    local interfaces=$(ip -br link show | grep -E "ether|ethernets" | awk '{print $1}' | grep -v "^lo$" | head -5)
+    local interfaces=$(ip -br link show | awk '{print $1}' | grep -E "^(en|eth)" | head -5)
     echo "$interfaces"
 }
 

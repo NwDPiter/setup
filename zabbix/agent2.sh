@@ -153,7 +153,6 @@ main() {
     # Verificar se o SO é suportado
     case "$OS" in
         ubuntu|debian)
-            choose_action
             action=$?
             ;;
         *)

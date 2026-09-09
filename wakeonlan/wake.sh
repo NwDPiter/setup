@@ -139,8 +139,18 @@ enable_wol() {
 }
 
 # ==========================================
-# 4. Configurar netplan
+# 4. Configurar rede (netplan ou interfaces)
 # ==========================================
+
+detect_network_system() {
+    if [ -d "/etc/netplan" ] && [ -f "/usr/sbin/netplan" ]; then
+        echo "netplan"
+    elif [ -f "/etc/network/interfaces" ]; then
+        echo "interfaces"
+    else
+        echo "unknown"
+    fi
+}
 
 configure_netplan() {
     print_header "4. Configurando arquivo de rede (netplan)"
@@ -184,6 +194,77 @@ EOF
     cat "$netplan_file"
 }
 
+configure_interfaces() {
+    print_header "4. Configurando arquivo de rede (interfaces)"
+    
+    local interfaces_file="/etc/network/interfaces"
+    local interfaces_dir="/etc/network/interfaces.d"
+    local temp_file=$(mktemp)
+    
+    if [ ! -f "$interfaces_file" ]; then
+        print_warning "Arquivo $interfaces_file não encontrado"
+        return 1
+    fi
+    
+    # Criar backup
+    cp "$interfaces_file" "${interfaces_file}.backup"
+    print_info "Backup criado: ${interfaces_file}.backup"
+    
+    # Criar diretório se não existir
+    if [ ! -d "$interfaces_dir" ]; then
+        mkdir -p "$interfaces_dir"
+        print_info "Diretório $interfaces_dir criado"
+    fi
+    
+    # Adicionar configuração WoL
+    echo ""
+    print_info "Adicionando configuração WoL para interface $INTERFACE..."
+    echo ""
+    
+    local found=0
+    local in_interface=0
+    local indent=""
+    
+    # Ler o arquivo original e adicionar WoL ao final da interface
+    while IFS= read -r line; do
+        echo "$line" >> "$temp_file"
+        
+        # Detectar se iniciamos a configuração da interface
+        if [[ "$line" =~ ^iface[[:space:]]+$INTERFACE[[:space:]] ]]; then
+            found=1
+            in_interface=1
+            # Pega o nível de indentação (geralmente 4 espaços)
+            indent="    "
+        elif [ "$in_interface" = "1" ] && [[ "$line" =~ ^[^[:space:]] ]]; then
+            # Nova interface ou seção encontrada, fecha a anterior
+            if [ "$found" = "1" ]; then
+                # Adiciona linhas WoL antes desta nova linha
+                sed -i '$ d' "$temp_file"  # Remove a última linha
+                echo "${indent}post-up /usr/sbin/ethtool -s $INTERFACE wol g" >> "$temp_file"
+                echo "${indent}post-down /usr/sbin/ethtool -s $INTERFACE wol d" >> "$temp_file"
+                echo "$line" >> "$temp_file"
+                found=0
+                in_interface=0
+            fi
+        fi
+    done < "$interfaces_file"
+    
+    # Se a interface estava no final do arquivo
+    if [ "$found" = "1" ]; then
+        echo "${indent}post-up /usr/sbin/ethtool -s $INTERFACE wol g" >> "$temp_file"
+        echo "${indent}post-down /usr/sbin/ethtool -s $INTERFACE wol d" >> "$temp_file"
+    fi
+    
+    # Copiar arquivo temporário para o original
+    cp "$temp_file" "$interfaces_file"
+    rm "$temp_file"
+    
+    print_success "Arquivo $interfaces_file atualizado"
+    echo ""
+    print_info "Seção da interface $INTERFACE:"
+    grep -A 10 "^iface $INTERFACE" "$interfaces_file" | head -15
+}
+
 # ==========================================
 # 5. Aplicar configurações
 # ==========================================
@@ -197,6 +278,21 @@ apply_netplan() {
     else
         print_error "Erro ao aplicar configurações netplan"
         print_warning "Tente editar manualmente: nano /etc/netplan/01-netcfg.yaml"
+        return 1
+    fi
+}
+
+apply_interfaces() {
+    print_header "5. Aplicando configurações"
+    
+    print_info "Reiniciando serviço de rede..."
+    
+    if systemctl restart networking; then
+        print_success "Serviço de rede reiniciado com sucesso"
+    else
+        print_error "Erro ao reiniciar serviço de rede"
+        print_warning "Tente manualmente: sudo systemctl restart networking"
+        print_info "Ou reboot o sistema para aplicar as configurações"
         return 1
     fi
 }
@@ -278,8 +374,20 @@ main() {
         enable_wol
     fi
     
-    configure_netplan
-    apply_netplan
+    # Detectar sistema de rede
+    local network_system=$(detect_network_system)
+    
+    if [ "$network_system" = "netplan" ]; then
+        configure_netplan
+        apply_netplan
+    elif [ "$network_system" = "interfaces" ]; then
+        configure_interfaces
+        apply_interfaces
+    else
+        print_error "Sistema de rede não identificado"
+        print_warning "Use: netplan ou /etc/network/interfaces manualmente"
+        return 1
+    fi
     
     show_final_instructions
     

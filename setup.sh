@@ -43,10 +43,9 @@ while true; do
     echo "1) Terminal & CLI (Sub-menu)"
     echo "2) Zabbix & Grafana (Sub-menu)"
     echo "3) Stack de Orquestração & Containers (sub-menu)"
-    #echo "5) Apenas Utilitários CLI (FZF, Zoxide, Bat, Ripgrep, Nvim, Byobu)"
-    echo "5) Sair"
+    echo "4) Sair"
 
-    read_tty "\n\033[1;33mEscolha o perfil de ambiente desejado (1-5): \033[0m" PROFILE_CHOICE
+    read_tty "\n\033[1;33mEscolha o perfil de ambiente desejado (1-4): \033[0m" PROFILE_CHOICE
 
     case "$PROFILE_CHOICE" in
         1)

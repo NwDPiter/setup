@@ -42,9 +42,9 @@ install_ubuntu() {
     if [ ! command -v wget &> /dev/null]; then
         apt update && apt install -y wget
     fi
-        wget https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu24.04_all.deb
-        dpkg -i zabbix-release_latest_7.0+ubuntu24.04_all.deb
-        apt update
+        wget https://repo.zabbix.com/zabbix/7.4/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.4+ubuntu24.04_all.deb
+        dpkg -i zabbix-release_latest_7.4+ubuntu24.04_all.deb
+        apt update 
 
         apt install -y zabbix-agent2
         apt install -y zabbix-agent2-plugin-mongodb zabbix-agent2-plugin-mssql zabbix-agent2-plugin-postgresql
@@ -62,9 +62,10 @@ install_debian() {
     if [ ! command -v wget &> /dev/null ]; then
         apt update && apt install -y wget
     fi
-    wget https://repo.zabbix.com/zabbix/7.0/debian/pool/main/z/zabbix-release/zabbix-release_latest_7.0+debian13_all.deb
-    dpkg -i zabbix-release_latest_7.0+debian13_all.deb
-    apt update
+
+    wget https://repo.zabbix.com/zabbix/7.4/release/debian/pool/main/z/zabbix-release/zabbix-release_latest_7.4+debian13_all.deb
+    dpkg -i zabbix-release_latest_7.4+debian13_all.deb
+    apt update 
     
     apt install -y zabbix-agent2
     apt install -y zabbix-agent2-plugin-mongodb zabbix-agent2-plugin-mssql zabbix-agent2-plugin-postgresql
@@ -119,6 +120,7 @@ choose_action() {
     echo "OBS: Este script suporta apenas Ubuntu(24.04) e Debian(13)"
     echo ""
     read -p "Escolha uma opção (0-3): " choice < /dev/tty
+    clear
     
     case "$choice" in
         1)

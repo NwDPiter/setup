@@ -62,7 +62,7 @@ fi
 log "Baixando dotfiles (.zshrc e starship.toml)..."
 curl -fsSL https://pdrops.net/config/.zshrc -o ~/.zshrc
 mkdir -p ~/.config
-#curl -fsSL https://pdrops.net/config/starship.toml -o ~/.config/starship.toml
+curl -fsSL https://pdrops.net/config/starship.toml -o ~/.config/starship.toml
 
 log "Garantindo plugins manuais do Zsh..."
 mkdir -p ~/.zsh-plugins

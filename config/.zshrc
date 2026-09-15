@@ -30,7 +30,6 @@ alias l='ls -CF'
 alias cat='batcat'
 alias v='nvim'
 alias vf='nvim $(fzf)'
-alias by='byobu'
 
 # --- Aliases: Kubernetes ---
 alias k='kubectl'
@@ -46,16 +45,10 @@ alias ld='lazydocker'
 # --- Aliases: Incus ---
 alias in='incus'
 alias inn='in network'
-alias ins='in stop'
+alias ins='in storage'
 alias inl='in list'
 alias ine='in exec'
 alias inrm='in remove'
-
-# --- Aliases: Mise ---
-alias m='mise'
-alias ml='mise list'
-alias mu='mise use'
-alias mr='mise remove'
 
 # --- Aliases: System Management ---
 alias spu='sudo apt update'
@@ -88,3 +81,9 @@ if command -v fzf &> /dev/null; then
   # Carrega os atalhos e autocompletar do FZF para o Zsh
   source <(fzf --zsh)
 fi
+
+# Função para atualizar o aviso da tarefa no Starship
+set_task() {
+    export TAREFA_ATUAL="$*"
+}
+alias task=set_task

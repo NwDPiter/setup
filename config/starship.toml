@@ -1,0 +1,7 @@
+# Certifique-se de incluir o ${custom.task} na sua linha format principal, ex:
+format = """$directory$git_branch$git_status${custom.task}\n$character"""
+
+[custom.task]
+command = "echo $TAREFA_ATUAL"
+when = '[ -n "$TAREFA_ATUAL" ]'  # Só ativa se a variável não estiver vazia
+format = "via [📋 $output](bold yellow) "

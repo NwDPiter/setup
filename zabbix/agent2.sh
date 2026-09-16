@@ -34,12 +34,60 @@ check_status() {
 
 }
 
+# Solicitar e validar o IPv4 do servidor Zabbix
+read_zabbix_server_ip() {
+    local octet
+    local -a octets
+
+    while true; do
+        read -r -p "Informe o IP do servidor Zabbix: " ZABBIX_SERVER_IP < /dev/tty
+
+        if [[ "$ZABBIX_SERVER_IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+            IFS='.' read -r -a octets <<< "$ZABBIX_SERVER_IP"
+
+            if (( ${#octets[@]} == 4 && 10#${octets[0]} <= 255 && 10#${octets[1]} <= 255 && 10#${octets[2]} <= 255 && 10#${octets[3]} <= 255 )); then
+                return 0
+            fi
+        fi
+
+        echo "IP inválido. Informe um endereço IPv4, por exemplo: 192.168.1.10"
+    done
+}
+
+# Solicitar e validar o nome do host monitorado
+read_zabbix_host_name() {
+    while true; do
+        read -r -p "Informe o nome do host monitorado: " ZABBIX_HOST_NAME < /dev/tty
+
+        if [[ "$ZABBIX_HOST_NAME" =~ ^[A-Za-z0-9._-]+$ ]]; then
+            return 0
+        fi
+
+        echo "Nome inválido. Use apenas letras, números, ponto, hífen ou sublinhado."
+    done
+}
+
+# Configurar o endereço do servidor no agente
+configure_zabbix_agent() {
+    local config_file="/etc/zabbix/zabbix_agent2.conf"
+
+    read_zabbix_server_ip
+    read_zabbix_host_name
+
+    sed -i -E "s|^[[:space:]]*#?[[:space:]]*Server=.*$|Server=$ZABBIX_SERVER_IP|" "$config_file"
+    sed -i -E "s|^[[:space:]]*#?[[:space:]]*ServerActive=.*$|ServerActive=$ZABBIX_SERVER_IP|" "$config_file"
+    sed -i -E "s|^[[:space:]]*#?[[:space:]]*Hostname=.*$|Hostname=$ZABBIX_HOST_NAME|" "$config_file"
+
+    echo "Servidor Zabbix configurado: $ZABBIX_SERVER_IP"
+    echo "Host monitorado configurado: $ZABBIX_HOST_NAME"
+}
+
 
 # Instalar Zabbix Agent2 em Ubuntu
 install_ubuntu() {
     echo "Instalando Zabbix Agent2 em Ubuntu $OS_VERSION..."
     
-    if [ ! command -v wget &> /dev/null]; then
+    if ! command -v wget &> /dev/null; then
         apt update && apt install -y wget
     fi
         wget https://repo.zabbix.com/zabbix/7.4/release/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.4+ubuntu24.04_all.deb
@@ -49,6 +97,7 @@ install_ubuntu() {
         apt install -y zabbix-agent2
         apt install -y zabbix-agent2-plugin-mongodb zabbix-agent2-plugin-mssql zabbix-agent2-plugin-postgresql
 
+        configure_zabbix_agent
         systemctl restart zabbix-agent2
         systemctl enable zabbix-agent2
 
@@ -70,6 +119,7 @@ install_debian() {
     apt install -y zabbix-agent2
     apt install -y zabbix-agent2-plugin-mongodb zabbix-agent2-plugin-mssql zabbix-agent2-plugin-postgresql
     
+    configure_zabbix_agent
     systemctl restart zabbix-agent2
     systemctl enable zabbix-agent2
     

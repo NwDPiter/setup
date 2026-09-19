@@ -152,8 +152,7 @@ while true; do
 
 
 
-        4) clear; bash <(curl -fsSL "$BASE_URL/scripts/cli.sh") $MODE_FLAG < /dev/tty; exit 0 ;;
-        5) clear; echo "Saindo..."; exit 0 ;;
+        4) clear; echo "Saindo..."; exit 0 ;;
         *) echo "Opção inválida."; sleep 1 ;;
     esac
 done

@@ -19,8 +19,8 @@ O script `wake.sh` automatiza a configuração completa de Wake-on-LAN:
 2. Detecta interfaces de rede
 3. Valida status atual do WoL
 4. Ativa WoL na interface escolhida
-5. Configura netplan para persistência
-6. Aplica as configurações
+5. Configura o Wake-on-LAN na conexão do NetworkManager com `nmcli`
+6. Reaplica as alterações na interface escolhida
 
 ### Como usar?
 
@@ -31,9 +31,16 @@ sudo ./wake.sh
 O script é interativo e vai:
 - Listar interfaces de rede disponíveis
 - Pedir para escolher qual configurar
+- Permitir ativar ou desfazer a configuração de WoL
 - Verificar e ativar WoL se necessário
-- Configurar arquivo de rede
+- Validar a conexão do NetworkManager associada à interface
+- Configurar o modo `magic` com `nmcli`
 - Mostrar instruções finais
+
+Depois de escolher a interface, selecione uma das opções:
+
+1. Ativar Wake-on-LAN por pacote mágico
+2. Desfazer a configuração, restaurando o valor padrão do NetworkManager
 
 ---
 
@@ -179,8 +186,8 @@ sudo ./wake.sh  # Configure uma vez
 ## 📚 Referências
 
 - Documentação ethtool: `man ethtool`
+- Documentação nmcli: `man nmcli`
 - Documentação wakeonlan: `man wakeonlan`
-- Netplan docs: https://netplan.io/
 
 ---
 

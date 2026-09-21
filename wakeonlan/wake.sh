@@ -45,8 +45,13 @@ check_root() {
 
 # Detectar interfaces de rede Ethernet
 detect_interfaces() {
-    local interfaces=$(ip -br link show | awk '{print $1}' | grep -E "^(en|eth)" | head -5)
-    echo "$interfaces"
+    if ! command -v nmcli &> /dev/null; then
+        print_error "nmcli não está instalado ou não está disponível"
+        return 1
+    fi
+
+    nmcli -t -f DEVICE,TYPE device status \
+        | awk -F: '$2 == "ethernet" {print $1}'
 }
 
 # ==========================================
@@ -69,17 +74,15 @@ install_ethtool() {
 # 2. Validar configuração WoL
 # ==========================================
 
-validate_wol() {
-    print_header "2. Validando configuração de Wake-on-LAN"
-    
+select_interface() {
     local interfaces=$(detect_interfaces)
-    
+
     if [ -z "$interfaces" ]; then
         print_error "Nenhuma interface de rede encontrada"
         exit 1
     fi
     
-    echo -e "${BLUE}Interfaces de rede detectadas:${NC}"
+    echo -e "${BLUE}Interfaces Ethernet detectadas pelo NetworkManager:${NC}"
     echo "$interfaces" | nl
     
     echo ""
@@ -93,6 +96,11 @@ validate_wol() {
     fi
     
     print_info "Interface selecionada: $INTERFACE"
+}
+
+validate_wol() {
+    print_header "2. Validando configuração de Wake-on-LAN"
+
     echo ""
     print_info "Verificando status WoL da interface $INTERFACE:"
     echo ""
@@ -139,160 +147,55 @@ enable_wol() {
 }
 
 # ==========================================
-# 4. Configurar rede (netplan ou interfaces)
+# 4. Configurar rede com NetworkManager
 # ==========================================
 
-detect_network_system() {
-    if [ -d "/etc/netplan" ] && [ -f "/usr/sbin/netplan" ]; then
-        echo "netplan"
-    elif [ -f "/etc/network/interfaces" ]; then
-        echo "interfaces"
+configure_nmcli() {
+    local wake_on_lan_mode="$1"
+
+    print_header "4. Configurando Wake-on-LAN com NetworkManager"
+
+    if ! command -v nmcli &> /dev/null; then
+        print_error "nmcli não está instalado ou não está disponível"
+        return 1
+    fi
+
+    local device_type
+    local connection_name
+    device_type=$(nmcli -g GENERAL.TYPE device show "$INTERFACE" 2>/dev/null || true)
+    connection_name=$(nmcli -g GENERAL.CONNECTION device show "$INTERFACE" 2>/dev/null || true)
+
+    if [ "$device_type" != "ethernet" ]; then
+        print_error "A interface $INTERFACE não é uma interface Ethernet gerenciada pelo NetworkManager"
+        return 1
+    fi
+
+    if [ -z "$connection_name" ] || [ "$connection_name" = "--" ]; then
+        print_error "Nenhuma conexão ativa do NetworkManager foi encontrada para $INTERFACE"
+        return 1
+    fi
+
+    CONNECTION_NAME="$connection_name"
+    print_info "Interface validada: $INTERFACE"
+    print_info "Conexão encontrada: $CONNECTION_NAME"
+    if [ "$wake_on_lan_mode" = "magic" ]; then
+        print_info "Ativando Wake-on-LAN por pacote mágico..."
     else
-        echo "unknown"
+        print_info "Restaurando a configuração padrão de Wake-on-LAN..."
     fi
+
+    nmcli connection modify "$CONNECTION_NAME" 802-3-ethernet.wake-on-lan "$wake_on_lan_mode"
+    print_success "Configuração atualizada na conexão $CONNECTION_NAME"
 }
 
-configure_netplan() {
-    print_header "4. Configurando arquivo de rede (netplan)"
-    
-    local netplan_dir="/etc/netplan"
-    local netplan_file="$netplan_dir/01-netcfg.yaml"
-    
-    if [ ! -d "$netplan_dir" ]; then
-        print_warning "Diretório netplan não encontrado. Você pode estar usando outro gerenciador de rede."
-        return 1
-    fi
-    
-    # Alterar permissões
-    print_info "Ajustando permissões dos arquivos netplan..."
-    chmod 600 "$netplan_dir"/*.yaml 2>/dev/null || true
-    print_success "Permissões ajustadas"
-    
-    # Criar backup
-    if [ -f "$netplan_file" ]; then
-        cp "$netplan_file" "${netplan_file}.backup"
-        print_info "Backup criado: ${netplan_file}.backup"
-    fi
-    
-    # Adicionar configuração WoL
-    echo ""
-    print_info "Adicionando configuração WoL ao netplan..."
-    echo ""
-    
-    cat > "$netplan_file" << EOF
-network:
-  version: 2
-  renderer: NetworkManager
-  ethernets:
-    $INTERFACE:
-      wakeonlan: true
-EOF
-    
-    print_success "Arquivo $netplan_file criado/atualizado"
-    echo ""
-    print_info "Conteúdo do arquivo:"
-    cat "$netplan_file"
-}
-
-configure_interfaces() {
-    print_header "4. Configurando arquivo de rede (interfaces)"
-    
-    local interfaces_file="/etc/network/interfaces"
-    local interfaces_dir="/etc/network/interfaces.d"
-    local temp_file=$(mktemp)
-    
-    if [ ! -f "$interfaces_file" ]; then
-        print_warning "Arquivo $interfaces_file não encontrado"
-        return 1
-    fi
-    
-    # Criar backup
-    cp "$interfaces_file" "${interfaces_file}.backup"
-    print_info "Backup criado: ${interfaces_file}.backup"
-    
-    # Criar diretório se não existir
-    if [ ! -d "$interfaces_dir" ]; then
-        mkdir -p "$interfaces_dir"
-        print_info "Diretório $interfaces_dir criado"
-    fi
-    
-    # Adicionar configuração WoL
-    echo ""
-    print_info "Adicionando configuração WoL para interface $INTERFACE..."
-    echo ""
-    
-    local found=0
-    local in_interface=0
-    local indent=""
-    
-    # Ler o arquivo original e adicionar WoL ao final da interface
-    while IFS= read -r line; do
-        echo "$line" >> "$temp_file"
-        
-        # Detectar se iniciamos a configuração da interface
-        if [[ "$line" =~ ^iface[[:space:]]+$INTERFACE[[:space:]] ]]; then
-            found=1
-            in_interface=1
-            # Pega o nível de indentação (geralmente 4 espaços)
-            indent="    "
-        elif [ "$in_interface" = "1" ] && [[ "$line" =~ ^[^[:space:]] ]]; then
-            # Nova interface ou seção encontrada, fecha a anterior
-            if [ "$found" = "1" ]; then
-                # Adiciona linhas WoL antes desta nova linha
-                sed -i '$ d' "$temp_file"  # Remove a última linha
-                echo "${indent}post-up /usr/sbin/ethtool -s $INTERFACE wol g" >> "$temp_file"
-                echo "${indent}post-down /usr/sbin/ethtool -s $INTERFACE wol d" >> "$temp_file"
-                echo "$line" >> "$temp_file"
-                found=0
-                in_interface=0
-            fi
-        fi
-    done < "$interfaces_file"
-    
-    # Se a interface estava no final do arquivo
-    if [ "$found" = "1" ]; then
-        echo "${indent}post-up /usr/sbin/ethtool -s $INTERFACE wol g" >> "$temp_file"
-        echo "${indent}post-down /usr/sbin/ethtool -s $INTERFACE wol d" >> "$temp_file"
-    fi
-    
-    # Copiar arquivo temporário para o original
-    cp "$temp_file" "$interfaces_file"
-    rm "$temp_file"
-    
-    print_success "Arquivo $interfaces_file atualizado"
-    echo ""
-    print_info "Seção da interface $INTERFACE:"
-    grep -A 10 "^iface $INTERFACE" "$interfaces_file" | head -15
-}
-
-# ==========================================
-# 5. Aplicar configurações
-# ==========================================
-
-apply_netplan() {
+apply_nmcli() {
     print_header "5. Aplicando configurações"
-    
-    print_info "Executando: netplan apply"
-    if netplan apply; then
+
+    print_info "Executando: nmcli device reapply $INTERFACE"
+    if nmcli device reapply "$INTERFACE"; then
         print_success "Configurações aplicadas com sucesso"
     else
-        print_error "Erro ao aplicar configurações netplan"
-        print_warning "Tente editar manualmente: nano /etc/netplan/01-netcfg.yaml"
-        return 1
-    fi
-}
-
-apply_interfaces() {
-    print_header "5. Aplicando configurações"
-    
-    print_info "Reiniciando serviço de rede..."
-    
-    if systemctl restart networking; then
-        print_success "Serviço de rede reiniciado com sucesso"
-    else
-        print_error "Erro ao reiniciar serviço de rede"
-        print_warning "Tente manualmente: sudo systemctl restart networking"
-        print_info "Ou reboot o sistema para aplicar as configurações"
+        print_error "Erro ao reaplicar as configurações em $INTERFACE"
         return 1
     fi
 }
@@ -367,31 +270,38 @@ main() {
     check_root
     
     install_ethtool
-    
-    if validate_wol; then
-        print_success "WoL já está ativado, pulando para configuração de rede..."
-    else
-        enable_wol
-    fi
-    
-    # Detectar sistema de rede
-    local network_system=$(detect_network_system)
-    
-    if [ "$network_system" = "netplan" ]; then
-        configure_netplan
-        apply_netplan
-    elif [ "$network_system" = "interfaces" ]; then
-        configure_interfaces
-        apply_interfaces
-    else
-        print_error "Sistema de rede não identificado"
-        print_warning "Use: netplan ou /etc/network/interfaces manualmente"
-        return 1
-    fi
-    
-    show_final_instructions
-    
-    print_success "Configuração concluída!"
+
+    select_interface
+
+    echo ""
+    echo "1) Ativar Wake-on-LAN por pacote mágico"
+    echo "2) Desfazer configuração do Wake-on-LAN"
+    echo ""
+    read -p "Escolha uma opção: " wol_action < /dev/tty
+
+    case "$wol_action" in
+        1)
+            if validate_wol; then
+                print_success "WoL já está ativado"
+            else
+                enable_wol
+            fi
+            configure_nmcli "magic"
+            apply_nmcli
+            show_final_instructions
+            print_success "Configuração concluída!"
+            ;;
+        2)
+            configure_nmcli "default"
+            apply_nmcli
+            print_success "Configuração do Wake-on-LAN desfeita"
+            ;;
+        *)
+            print_error "Opção inválida"
+            return 1
+            ;;
+    esac
+
     echo ""
 }
 

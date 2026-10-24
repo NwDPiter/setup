@@ -87,3 +87,11 @@ set_task() {
     export TAREFA_ATUAL="$*"
 }
 alias task=set_task
+
+take() {
+  if [[ $1 =~ ^https?:// ]]; then
+    git clone "$1" && cd "$(basename "${1%.git}")"
+  else
+    mkdir -p "$1" && cd "$1"
+  fi
+}

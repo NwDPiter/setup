@@ -30,16 +30,16 @@ alias l='ls -CF'
 alias cat='batcat'
 alias v='nvim'
 alias vf='nvim $(fzf)'
+alias shut='shutdown now'
+alias h='hermes'
+alias by='byobu'
 
 # --- Aliases: Kubernetes ---
 alias k='kubectl'
 alias kk='k kustomize'
-alias h='helm'
 
 # --- Aliases: Docker ---
 alias d='docker'
-alias dop='docker ps'
-alias dov='docker volume ls'
 alias ld='lazydocker'
 
 # --- Aliases: Incus ---
